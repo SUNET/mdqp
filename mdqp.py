@@ -40,7 +40,7 @@ def inspect_file(file):
     try:
         tree = ET.parse(file)
     except ET.ParseError:
-        print(f"Can't parse {entity} - skipping")
+        print(f"Can't parse {file} - skipping")
         return {}
 
     root = tree.getroot()
