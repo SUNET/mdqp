@@ -4,7 +4,7 @@ ENV BASEDIR=/work
 
 ENV PIP_INDEX_URL=https://pypi.sunet.se/simple
 
-RUN pip3 install poetry
+RUN python3 -m pip install poetry
 
 COPY poetry.lock pyproject.toml /
 
