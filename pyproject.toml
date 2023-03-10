@@ -13,3 +13,9 @@ requests = "^2.28.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "Sunet"
+url = "https://pypi.sunet.se/simple/"
+default = true
+secondary = false
