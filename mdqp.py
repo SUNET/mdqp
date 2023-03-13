@@ -23,13 +23,13 @@ def sha1sum(filename):
 
 
 def download_signed_metadata(mdq, destination_dir, shasum):
-    baseurl = f"{mdq}/entities/" + "{sha1}"
+    baseurl = f"{mdq}/entities/" + "%7Bsha1%7D"
     metadata_url = f"{baseurl}{shasum}"
     response = requests.get(metadata_url)
     # Ensure fully downloaded files in signed_metadata_dir
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(response.content)
-    shutil.move(tmp.name, destination_dir + "/{sha1}" + shasum)
+    shutil.move(tmp.name, destination_dir + "/%7Bsha1%7D" + shasum)
 
 
 def inspect_file(file):
@@ -133,10 +133,10 @@ def main():
             print(f'Removed file {entity}: {entity_metadata["entity_sha"]}')
             os.remove(seen_metadata_dir + "/" + entity)
             if os.path.exists(
-                signed_metadata_dir + "/{sha1}" + entity_metadata["entity_sha"]
+                signed_metadata_dir + "/%7Bsha1%7D" + entity_metadata["entity_sha"]
             ):
                 os.remove(
-                    signed_metadata_dir + "/{sha1}" + entity_metadata["entity_sha"]
+                    signed_metadata_dir + "/%7Bsha1%7D" + entity_metadata["entity_sha"]
                 )
 
     total_queue_size = queue_daily.size + queue_delta.size
