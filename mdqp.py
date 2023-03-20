@@ -163,8 +163,15 @@ def main():
         message = queue.get()
         shasum = message["shasum"]
         entityid = message["entityid"]
+        file = message["file"]
         print(f"Working on message from the {queue_str} queue: {entityid} - {shasum}")
-        download_signed_metadata(MDQ_SERVICE, signed_metadata_dir, shasum)
+        if os.path.exists(incoming_dir + "/" + file):
+            download_signed_metadata(MDQ_SERVICE, signed_metadata_dir, shasum)
+        else:
+            print(
+                f"{file} not available in {incoming_dir} - probably removed by upstream"
+            )
+
         queue.task_done()
 
         operations_counter += 1
