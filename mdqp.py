@@ -2,6 +2,7 @@
 
 import datetime
 import hashlib
+import logging
 import os
 import shutil
 import sys
@@ -40,7 +41,7 @@ def inspect_file(file):
     try:
         tree = ET.parse(file)
     except ET.ParseError:
-        print(f"Can't parse {file} - skipping")
+        logging.error(f"Can't parse {file} - skipping")
         return {}
 
     root = tree.getroot()
@@ -48,7 +49,7 @@ def inspect_file(file):
     try:
         entity_id = root.attrib["entityID"]
     except KeyError:
-        print(f"No entityID found on {entity} - skipping")
+        logging.error(f"No entityID found on {entity} - skipping")
 
     if entity_id:
         entityid_encoded = hashlib.sha1(entity_id.encode("utf-8"))
@@ -66,7 +67,7 @@ def main():
     hour = now.hour
 
     runs_left = (24 - hour) * RPH
-    print(f"Runs left today: {runs_left}")
+    logging.info(f"Runs left today: {runs_left}")
 
     incoming_dir = f"{BASEDIR}/incoming_metadata"
     seen_metadata_dir = f"{BASEDIR}/seen_metadata"
@@ -95,7 +96,7 @@ def main():
         incoming_file = incoming_dir + "/" + entity
 
         if not entity_metadata:
-            print(f"Can go further with {entity} due to parsing errors")
+            logging.warnning(f"Can go further with {entity} due to parsing errors")
             continue
 
         message_to_enqueue = dict(
@@ -105,14 +106,14 @@ def main():
         )
 
         if full_sync:
-            print(f"Boostrap of {entity}")
+            logging.info(f"Boostrap of {entity}")
             queue_daily.put(message_to_enqueue)
             shutil.copyfile(incoming_file, seen_metadata_dir + "/" + entity)
             continue
 
         # new file
         if not os.path.isfile(seen_metadata_dir + "/" + entity):
-            print(f"New file {entity}")
+            logging.info(f"New file {entity}")
             queue_delta.put(message_to_enqueue)
             shutil.copyfile(incoming_file, seen_metadata_dir + "/" + entity)
             continue
@@ -121,7 +122,7 @@ def main():
         incoming_sha = sha1sum(incoming_dir + "/" + entity)
         published_sha = sha1sum(seen_metadata_dir + "/" + entity)
         if incoming_sha != published_sha:
-            print(f"Modified file {entity}")
+            logging.info(f"Modified file {entity}")
             queue_delta.put(message_to_enqueue)
             shutil.copyfile(incoming_file, seen_metadata_dir + "/" + entity)
             continue
@@ -130,7 +131,7 @@ def main():
     for entity in os.listdir(seen_metadata_dir):
         if not os.path.exists(incoming_dir + "/" + entity):
             entity_metadata = inspect_file(seen_metadata_dir + "/" + entity)
-            print(f'Removed file {entity}: {entity_metadata["entity_sha"]}')
+            logging.info(f'Removed file {entity}: {entity_metadata["entity_sha"]}')
             os.remove(seen_metadata_dir + "/" + entity)
             if os.path.exists(
                 signed_metadata_dir + "/%7Bsha1%7D" + entity_metadata["entity_sha"]
@@ -140,14 +141,14 @@ def main():
                 )
 
     total_queue_size = queue_daily.size + queue_delta.size
-    print(f"Total queue: {total_queue_size}")
+    logging.info(f"Total queue: {total_queue_size}")
 
     if total_queue_size == 0:
-        print("No updates to fetch")
+        logging.info("No updates to fetch")
         sys.exit()
 
     operations_this_run = int(total_queue_size / runs_left) + 1
-    print(f"Updates process this run: {operations_this_run}")
+    logging.info(f"Updates process this run: {operations_this_run}")
     operations_counter = 0
     while operations_counter < operations_this_run:
         queue_str = ""
@@ -158,17 +159,19 @@ def main():
             queue_str = "daily"
             queue = queue_daily
         else:
-            print("Queues are empty!")
+            logging.info("Queues are empty!")
             break
         message = queue.get()
         shasum = message["shasum"]
         entityid = message["entityid"]
         file = message["file"]
-        print(f"Working on message from the {queue_str} queue: {entityid} - {shasum}")
+        logging.info(
+            f"Working on message from the {queue_str} queue: {entityid} - {shasum}"
+        )
         if os.path.exists(incoming_dir + "/" + file):
             download_signed_metadata(MDQ_SERVICE, signed_metadata_dir, shasum)
         else:
-            print(
+            logging.info(
                 f"{file} not available in {incoming_dir} - probably removed by upstream"
             )
 
@@ -178,4 +181,7 @@ def main():
 
 
 if __name__ == "__main__":
+    format = "%(asctime)s: %(message)s"
+    logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
+
     main()
