@@ -96,7 +96,7 @@ def main():
         incoming_file = incoming_dir + "/" + entity
 
         if not entity_metadata:
-            logging.warnning(f"Can go further with {entity} due to parsing errors")
+            logging.warning(f"Can go further with {entity} due to parsing errors")
             continue
 
         message_to_enqueue = dict(
