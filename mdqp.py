@@ -49,7 +49,7 @@ def inspect_file(file):
     try:
         entity_id = root.attrib["entityID"]
     except KeyError:
-        logging.error(f"No entityID found on {entity} - skipping")
+        logging.error(f"No entityID found on {file} - skipping")
 
     if entity_id:
         entityid_encoded = hashlib.sha1(entity_id.encode("utf-8"))
