@@ -27,6 +27,9 @@ def download_signed_metadata(mdq, destination_dir, shasum):
     baseurl = f"{mdq}/entities/" + "%7Bsha1%7D"
     metadata_url = f"{baseurl}{shasum}"
     response = requests.get(metadata_url)
+    if response.status_code != 200:
+        raise SystemExit(f'pyff returned {response.status_code} better die here')
+
     # Ensure fully downloaded files in signed_metadata_dir
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(response.content)
