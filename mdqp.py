@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 
 import requests
 from persistqueue import SQLiteQueue
-
+from pathlib import Path
 
 def sha1sum(filename):
     h = hashlib.sha1()
@@ -76,12 +76,14 @@ def main():
     seen_metadata_dir = f"{BASEDIR}/seen_metadata"
     signed_metadata_dir = f"{BASEDIR}/signed_metadata/entities"
     queues_dir = f"{BASEDIR}/queue"
+    full_sync_file = f"{BASEDIR}/full_sync"
+
 
     full_sync = False
-    if not os.path.isdir(seen_metadata_dir):
+    if not os.path.exists(full_sync_file):
         # If seen_metadata_dir doesn't exist we need to handle all entities as
         # unhandled. Remove queues aswell.
-        os.makedirs(seen_metadata_dir)
+        Path(full_sync_file).touch()
         full_sync = True
         if os.path.exists(queues_dir):
             shutil.rmtree(queues_dir)
