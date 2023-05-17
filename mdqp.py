@@ -69,7 +69,7 @@ def main():
     now = datetime.datetime.now()
     hour = now.hour
 
-    runs_left = (24 - hour) * RPH
+    runs_left = (23 - hour) * RPH + 1
     logging.info(f"Runs left today: {runs_left}")
 
     incoming_dir = f"{BASEDIR}/incoming_metadata"
