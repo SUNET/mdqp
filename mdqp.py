@@ -66,6 +66,10 @@ def main():
     MDQ_SERVICE = os.environ["MDQ_SERVICE"]
     RPH = int(os.environ["RPH"])
 
+    MIN_ENTITIES_PER_RUN = 0
+    if "MIN_ENTITIES_PER_RUN" in os.environ:
+        MIN_ENTITIES_PER_RUN = int(os.environ["MIN_ENTITIES_PER_RUN"])
+
     now = datetime.datetime.now()
     hour = now.hour
 
@@ -152,7 +156,7 @@ def main():
         logging.info("No updates to fetch")
         sys.exit()
 
-    operations_this_run = int(total_queue_size / runs_left) + 1
+    operations_this_run = int(total_queue_size / runs_left) + 1 + MIN_ENTITIES_PER_RUN
     logging.info(f"Updates process this run: {operations_this_run}")
     operations_counter = 0
     while operations_counter < operations_this_run:
