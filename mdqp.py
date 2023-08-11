@@ -81,7 +81,7 @@ def main():
 
     full_sync = False
     if not os.path.exists(full_sync_file):
-        # If seen_metadata_dir doesn't exist we need to handle all entities as
+        # If full_sync_file doesn't exist we need to handle all entities as
         # unhandled. Remove queues aswell.
         Path(full_sync_file).touch()
         full_sync = True
