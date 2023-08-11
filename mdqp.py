@@ -88,7 +88,7 @@ def main():
         if os.path.exists(queues_dir):
             shutil.rmtree(queues_dir)
 
-    for dir in [incoming_dir, signed_metadata_dir]:
+    for dir in [incoming_dir, signed_metadata_dir, seen_metadata_dir]:
         if not os.path.isdir(dir):
             os.makedirs(dir)
     # Merge queues when or if priority is added to persistqueue?
