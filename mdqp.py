@@ -30,6 +30,12 @@ def download_signed_metadata(mdq, destination_dir, shasum):
     if response.status_code != 200:
         raise SystemExit(f'mdq returned {response.status_code} (for {metadata_url}) better die here - please investigate')
 
+    if "Content-Type" not in response.headers:
+        raise SystemExit(f'mdq returned no content-type (for {metadata_url}) better die here - please investigate')
+
+    if response.headers["Content-Type"] != "application/xml":
+        raise SystemExit(f'mdq returned invalid ({response.headers["Content-Type"]}) content-type (for {metadata_url}) better die here - please investigate')
+
     # Ensure fully downloaded files in signed_metadata_dir
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(response.content)
