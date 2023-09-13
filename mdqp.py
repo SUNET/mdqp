@@ -33,7 +33,7 @@ def download_signed_metadata(mdq, destination_dir, shasum):
     if "Content-Type" not in response.headers:
         raise SystemExit(f'mdq returned no content-type (for {metadata_url}) better die here - please investigate')
 
-    if response.headers["Content-Type"] != "application/xml":
+    if not response.headers["Content-Type"].startswith("application/xml"):
         raise SystemExit(f'mdq returned invalid ({response.headers["Content-Type"]}) content-type (for {metadata_url}) better die here - please investigate')
 
     # Ensure fully downloaded files in signed_metadata_dir
