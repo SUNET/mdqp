@@ -46,32 +46,61 @@ def download_signed_metadata(mdq, destination_dir, shasum):
     # Ensure fully downloaded files in signed_metadata_dir
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(response.content)
+
+    metadata_tree=xml_to_tree(tmp.name)
+    if not metadata_tree:
+        raise SystemExit(
+            f'mdq returned invalid XML (for {metadata_url}) better die here - please investigate'
+        )
+
+    entityid = get_entityid(metadata_tree)
+    if not entityid:
+        raise SystemExit(
+            f'mdq returned metadata without entityid (for {metadata_url}) better die here - please investigate'
+        )
     shutil.move(tmp.name, destination_dir + "/%7Bsha1%7D" + shasum)
 
 
-def inspect_file(file):
+def get_entityid_from_file(file):
+    metadata = xml_to_tree(file)
+    entityid = None
 
-    entity_id = None
-    entity_sha = None
+    if metadata:
+        entityid = get_entityid(metadata)
+    else:
+        return None
 
+    return entityid
+
+
+def get_entityid(parsed_metadata):
+    entityid = None
+
+    root = parsed_metadata.getroot()
+
+    try:
+        entityid = root.attrib["entityID"]
+    except KeyError:
+        logging.warn(f"No entityID found")
+
+    return entityid
+
+
+def xml_to_tree(file):
     try:
         tree = ET.parse(file)
     except ET.ParseError:
-        logging.error(f"Can't parse {file} - skipping")
-        return {}
+        logging.error(f"Can't parse {file}")
+        return None
 
-    root = tree.getroot()
+    return tree
 
-    try:
-        entity_id = root.attrib["entityID"]
-    except KeyError:
-        logging.error(f"No entityID found on {file} - skipping")
 
-    if entity_id:
-        entityid_encoded = hashlib.sha1(entity_id.encode("utf-8"))
-        entity_sha = entityid_encoded.hexdigest()
+def shasum_entityid(entityid):
+    entityid_encoded = hashlib.sha1(entityid.encode("utf-8"))
+    entityid_sha = entityid_encoded.hexdigest()
 
-    return {"entity_id": entity_id, "entity_sha": entity_sha}
+    return entityid_sha
 
 
 def main():
@@ -112,18 +141,17 @@ def main():
     queue_delta = SQLiteQueue(f"{queues_dir}/delta_queue", auto_commit=False)
 
     for entity in os.listdir(incoming_dir):
-
-        entity_metadata = inspect_file(incoming_dir + "/" + entity)
         incoming_file = incoming_dir + "/" + entity
+        entityid = get_entityid_from_file(incoming_file)
 
-        if not entity_metadata:
+        if not entityid:
             logging.warning(f"Can go further with {entity} due to parsing errors")
             continue
 
         message_to_enqueue = dict(
             file=entity,
-            entityid=entity_metadata["entity_id"],
-            shasum=entity_metadata["entity_sha"],
+            entityid=entityid,
+            shasum=shasum_entityid(entityid),
         )
 
         if full_sync:
@@ -151,15 +179,12 @@ def main():
     # removed files
     for entity in os.listdir(seen_metadata_dir):
         if not os.path.exists(incoming_dir + "/" + entity):
-            entity_metadata = inspect_file(seen_metadata_dir + "/" + entity)
-            logging.info(f'Removed file {entity}: {entity_metadata["entity_sha"]}')
+            entityid = get_entityid_from_file(seen_metadata_dir + "/" + entity)
+            entity_sha = shasum_entityid(entityid)
+            logging.info(f"Removed file {entity}: {entity_sha}")
             os.remove(seen_metadata_dir + "/" + entity)
-            if os.path.exists(
-                signed_metadata_dir + "/%7Bsha1%7D" + entity_metadata["entity_sha"]
-            ):
-                os.remove(
-                    signed_metadata_dir + "/%7Bsha1%7D" + entity_metadata["entity_sha"]
-                )
+            if os.path.exists(signed_metadata_dir + "/%7Bsha1%7D" + entity_sha):
+                os.remove(signed_metadata_dir + "/%7Bsha1%7D" + entity_sha)
 
     total_queue_size = queue_daily.size + queue_delta.size
     logging.info(f"Total queue: {total_queue_size}")
