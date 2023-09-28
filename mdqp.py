@@ -13,6 +13,7 @@ import requests
 from persistqueue import SQLiteQueue
 from pathlib import Path
 
+
 def sha1sum(filename):
     h = hashlib.sha1()
     b = bytearray(128 * 1024)
@@ -28,13 +29,19 @@ def download_signed_metadata(mdq, destination_dir, shasum):
     metadata_url = f"{baseurl}{shasum}"
     response = requests.get(metadata_url)
     if response.status_code != 200:
-        raise SystemExit(f'mdq returned {response.status_code} (for {metadata_url}) better die here - please investigate')
+        raise SystemExit(
+            f"mdq returned {response.status_code} (for {metadata_url}) better die here - please investigate"
+        )
 
     if "Content-Type" not in response.headers:
-        raise SystemExit(f'mdq returned no content-type (for {metadata_url}) better die here - please investigate')
+        raise SystemExit(
+            f"mdq returned no content-type (for {metadata_url}) better die here - please investigate"
+        )
 
     if not response.headers["Content-Type"].startswith("application/xml"):
-        raise SystemExit(f'mdq returned invalid ({response.headers["Content-Type"]}) content-type (for {metadata_url}) better die here - please investigate')
+        raise SystemExit(
+            f'mdq returned invalid ({response.headers["Content-Type"]}) content-type (for {metadata_url}) better die here - please investigate'
+        )
 
     # Ensure fully downloaded files in signed_metadata_dir
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
@@ -87,7 +94,6 @@ def main():
     signed_metadata_dir = f"{BASEDIR}/signed_metadata/entities"
     queues_dir = f"{BASEDIR}/queue"
     full_sync_file = f"{BASEDIR}/full_sync"
-
 
     full_sync = False
     if not os.path.exists(full_sync_file):
