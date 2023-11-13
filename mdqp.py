@@ -187,7 +187,7 @@ def main():
             if os.path.exists(signed_metadata_dir + "/%7Bsha1%7D" + entity_sha):
                 os.remove(signed_metadata_dir + "/%7Bsha1%7D" + entity_sha)
 
-    total_queue_size = queue_daily.size + queue_delta.size
+    total_queue_size = queue_daily.size + queue_delta.size + queue_new.size
     logging.info(f"Total queue: {total_queue_size}")
 
     if total_queue_size == 0:
