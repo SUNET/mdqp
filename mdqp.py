@@ -139,6 +139,7 @@ def main():
     # Merge queues when or if priority is added to persistqueue?
     queue_daily = SQLiteQueue(f"{queues_dir}/daily_queue", auto_commit=False)
     queue_delta = SQLiteQueue(f"{queues_dir}/delta_queue", auto_commit=False)
+    queue_new = SQLiteQueue(f"{queues_dir}/new_queue", auto_commit=False)
 
     for entity in os.listdir(incoming_dir):
         incoming_file = incoming_dir + "/" + entity
@@ -163,7 +164,7 @@ def main():
         # new file
         if not os.path.isfile(seen_metadata_dir + "/" + entity):
             logging.info(f"New file {entity}")
-            queue_delta.put(message_to_enqueue)
+            queue_new.put(message_to_enqueue)
             shutil.copyfile(incoming_file, seen_metadata_dir + "/" + entity)
             continue
 
@@ -198,7 +199,10 @@ def main():
     operations_counter = 0
     while operations_counter < operations_this_run:
         queue_str = ""
-        if queue_delta.size != 0:
+        if queue_new.size != 0:
+            queue_str = "new"
+            queue = queue_new
+        elif queue_delta.size != 0:
             queue_str = "delta"
             queue = queue_delta
         elif queue_daily.size != 0:
