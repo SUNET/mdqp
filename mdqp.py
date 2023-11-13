@@ -47,16 +47,16 @@ def download_signed_metadata(mdq, destination_dir, shasum):
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(response.content)
 
-    metadata_tree=xml_to_tree(tmp.name)
+    metadata_tree = xml_to_tree(tmp.name)
     if not metadata_tree:
         raise SystemExit(
-            f'mdq returned invalid XML (for {metadata_url}) better die here - please investigate'
+            f"mdq returned invalid XML (for {metadata_url}) better die here - please investigate"
         )
 
     entityid = get_entityid(metadata_tree)
     if not entityid:
         raise SystemExit(
-            f'mdq returned metadata without entityid (for {metadata_url}) better die here - please investigate'
+            f"mdq returned metadata without entityid (for {metadata_url}) better die here - please investigate"
         )
     shutil.move(tmp.name, destination_dir + "/%7Bsha1%7D" + shasum)
 
